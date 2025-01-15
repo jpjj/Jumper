@@ -1,0 +1,5 @@
+geopy==2.4.1
+pandas==2.2.3
+streamlit==1.41.1
+streamlit_folium==0.24.0
+traveling_rustling==0.1.1
