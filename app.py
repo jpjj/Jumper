@@ -1,15 +1,17 @@
 # add to requirements.txt
 # traveling_rustling==0.1.1
 
+import datetime
 import folium
 import streamlit as st
 import traveling_rustling as tr
 from streamlit_folium import st_folium
 import pandas as pd
-from src.solve import solve
+from src.solve import create_calendar, display_solution, solve
 from src.geocode import geocode_address
 from src import setup
 # from src.components import sidebar
+
 
 # sidebar.show_sidebar()
 ss = st.session_state
@@ -76,7 +78,7 @@ if ss["data"] is not None:
         st.write("All addresses geocoded.")
         ss["geocodes_checked"] = True
     with st.expander("Check Data"):
-        st.data_editor(
+        ss["data"] = st.data_editor(
             ss["data"],
             column_config={
                 column_date: st.column_config.CheckboxColumn()
@@ -92,6 +94,24 @@ if ss["data"] is not None:
 
         # call to render Folium map in Streamlit
         st_data = st_folium(m, width=725)
+
+    ss["start_time"] = st.time_input(
+        "Set daily start time", datetime.time(6, 0)
+    )
+
+    ss["end_time"] = st.time_input("Set daily end time", datetime.time(20, 0))
+
     clicked = st.button("Generate schedule")
     if clicked:
         solve()
+        st.write(
+            "Lexigraphical Minimization: Lateness, Traveltime, Makespan, Waitingtime."
+        )
+        ss["solve"] = True
+if ss["solve"]:
+    # create two columns
+    col1, col2 = st.columns([0.3, 0.7])
+    with col1:
+        display_solution()
+    with col2:
+        create_calendar()

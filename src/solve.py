@@ -1,7 +1,7 @@
 import datetime
 import streamlit as st
 import traveling_rustling
-
+from streamlit_calendar import calendar
 from src.geocode import fetch_distance_matrix
 
 ss = st.session_state
@@ -10,11 +10,11 @@ ss = st.session_state
 def solve():
     data = ss["data"]
 
-    location_list = []
+    ss["location_list"] = []
     i = -1
     for name, row in data.iterrows():
         i += 1
-        location_list.append(
+        ss["location_list"].append(
             {
                 "name": name,
                 "address": row["Address"],
@@ -30,12 +30,12 @@ def solve():
             }
         )
         # here erstmal nur die Reihe aller Daten. raw.
-        for idx in data.columns[7:]:
+        for idx in data.columns[6:]:
             if row[idx]:
-                location_list[i]["time_windows"].append(idx)
+                ss["location_list"][i]["time_windows"].append(idx)
 
-    time_windows = [[] for _ in range(len(location_list))]
-    for i, location in enumerate(location_list):
+    time_windows = [[] for _ in range(len(ss["location_list"]))]
+    for i, location in enumerate(ss["location_list"]):
         for date_str in location["time_windows"]:
             date = datetime.datetime.strptime(date_str, "%d.%m.%Y").date()
             open_time = location["open_time"]
@@ -63,15 +63,21 @@ def solve():
             time_windows[i][j] = tuple(time_windows[i][j])
 
     working_times = [
-        int(location["working_time"] * 60) for location in location_list
+        int(location["working_time"] * 60) for location in ss["location_list"]
     ]
 
     distance_matrix = fetch_distance_matrix(
-        [location["geocode"] for location in location_list]
+        [location["geocode"] for location in ss["location_list"]]
     )
-    operation_times = (8 * 3600, 20 * 3600)
+    start = (ss["start_time"].hour * 60 + ss["start_time"].minute) * 60 + ss[
+        "start_time"
+    ].second
+    end = (ss["end_time"].hour * 60 + ss["end_time"].minute) * 60 + ss[
+        "end_time"
+    ].second
+    operation_times = (start, end)
 
-    solution = traveling_rustling.solve(
+    ss["solution"] = traveling_rustling.solve(
         distance_matrix,
         distance_matrix,
         working_times,
@@ -79,13 +85,48 @@ def solve():
         operation_times,
         1,
     )
-    lateness = solution.lateness
-    makespan = solution.duration
-    waiting_time = solution.waiting_time
-    travel_time = solution.traveling_time
 
-    st.write("Optimized Route:")
-    for i, event in enumerate(solution.schedule):
+
+def display_solution():
+    lateness = ss["solution"].lateness
+    makespan = ss["solution"].duration
+    waiting_time = ss["solution"].waiting_time
+    travel_time = ss["solution"].traveling_time
+
+    # st.write("Optimized Route:")
+    # for i, event in enumerate(ss["solution"].schedule):
+    #     window = event[0].window
+    #     start = datetime.datetime.fromtimestamp(
+    #         window[0], tz=datetime.timezone.utc
+    #     )
+    #     end = datetime.datetime.fromtimestamp(
+    #         window[1], tz=datetime.timezone.utc
+    #     )
+    #     name = type(event[0]).__name__
+    #     if hasattr(event[0], "location"):
+    #         location = event[0].location
+    #         st.write(
+    #             f"{ss['location_list'][location]['name']} {datetime.datetime.strftime(start, '%d.%m.%Y %H:%M:%S')} to {datetime.datetime.strftime(end, '%d.%m.%Y %H:%M:%S')}"
+    #         )
+    # else:
+    #     st.write(
+    #         f"{name} {datetime.strftime(start, '%d.%m.%Y %H:%M:%S')} to {datetime.strftime(end, '%d.%m.%Y %H:%M:%S')}"
+    #     )
+    st.write(f"Lateness: {datetime.timedelta(seconds=lateness)}")
+    st.write(f"Waiting Time: {datetime.timedelta(seconds=waiting_time)}")
+    st.write(
+        f"Makespan (Total Operation Time): {datetime.timedelta(seconds=makespan)}"
+    )
+    st.write(f"Total Travel Time: {datetime.timedelta(seconds=travel_time)}")
+    st.write(f"Total iterations: {ss['solution'].iterations}")
+    st.write(
+        f"Total time taken to solve: {ss['solution'].time_taken_microseconds / 1_000_000:.2f} seconds"
+    )
+
+
+def create_calendar():
+    calendar_events = []
+    for i, event in enumerate(ss["solution"].schedule):
         window = event[0].window
         start = datetime.datetime.fromtimestamp(
             window[0], tz=datetime.timezone.utc
@@ -93,23 +134,44 @@ def solve():
         end = datetime.datetime.fromtimestamp(
             window[1], tz=datetime.timezone.utc
         )
-        name = type(event[0]).__name__
-        if hasattr(event[0], "location"):
-            location = event[0].location
-            st.write(
-                f"{location_list[location]['name']} {datetime.datetime.strftime(start, '%d.%m.%Y %H:%M:%S')} to {datetime.datetime.strftime(end, '%d.%m.%Y %H:%M:%S')}"
-            )
-        # else:
-        #     st.write(
-        #         f"{name} {datetime.strftime(start, '%d.%m.%Y %H:%M:%S')} to {datetime.strftime(end, '%d.%m.%Y %H:%M:%S')}"
-        #     )
-    st.write(f"Lateness: {datetime.timedelta(seconds=lateness)}")
-    st.write(f"Waiting Time: {datetime.timedelta(seconds=waiting_time)}")
-    st.write(
-        f"Makespan (Total Operation Time): {datetime.timedelta(seconds=makespan)}"
+        name = type(event[0]).__name__[2:]
+        match name:
+            case "Travel":
+                calendar_events.append(
+                    {
+                        "resourceId": name,
+                        "title": name,
+                        "start": start.isoformat(),
+                        "end": end.isoformat(),
+                    }
+                )
+            case "Work":
+                location = event[0].location
+                calendar_events.append(
+                    {
+                        "resourceId": name,
+                        "title": ss["location_list"][location]["name"],
+                        "start": start.isoformat(),
+                        "end": end.isoformat(),
+                    }
+                )
+    calendar_options = {
+        "initialView": "timeGridWeek",
+        "timeFormat": "H(:mm)",
+        "selectable": True,
+        "slotMinTime": ss["start_time"].isoformat(),
+        "slotMaxTime": ss["end_time"].isoformat(),
+        "initialDate": calendar_events[0]["start"],
+        "headerToolbar": {
+            "left": "prev,next",
+            "center": "title",
+            "right": "timeGridWeek,timeGridDay",
+        },
+    }
+    custom_css = {}
+    calendar1 = calendar(
+        events=calendar_events,
+        options=calendar_options,
+        custom_css=custom_css,
     )
-    st.write(f"Total Travel Time: {datetime.timedelta(seconds=travel_time)}")
-    st.write(f"Total iterations: {solution.iterations}")
-    st.write(
-        f"Total time taken to solve: {solution.time_taken_microseconds / 1_000_000:.2f} seconds"
-    )
+    st.write(calendar1)
