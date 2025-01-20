@@ -1,13 +1,12 @@
 # add to requirements.txt
 # traveling_rustling==0.1.1
 
-import folium
 import streamlit as st
-from streamlit_folium import st_folium
 import pandas as pd
-from src.display_solution import create_calendar, display_solution
+from src.display_input import display_input
+from src.display_solution import display_solution
 from src.solve import solve
-from src.geocode import geocode_address
+from src.geocode import add_geocodes
 from src import setup
 from src.working_hours_selection_dialog import working_hours_selection_dialog
 # from src.components import sidebar
@@ -67,33 +66,10 @@ else:
 if ss["data"] is not None:
     if not ss["geocodes_checked"]:
         # check if all geocodes existent
-        for i, row in ss["data"].iterrows():
-            if pd.isna(row["Lat"]) or pd.isna(row["Lat"]):
-                st.write(
-                    f"Finding missing geocode for address {row['Address']}..."
-                )
-                geocode = geocode_address(row["Address"])
-                ss["data"].at[i, "Lat"] = geocode[0][0]
-                ss["data"].at[i, "Lon"] = geocode[0][1]
+        add_geocodes(ss["data"])
         st.write("All addresses geocoded.")
         ss["geocodes_checked"] = True
-    with st.expander("Check Data"):
-        ss["data"] = st.data_editor(
-            ss["data"],
-            column_config={
-                column_date: st.column_config.CheckboxColumn()
-                for column_date in ss["data"].columns[7:]
-            },
-            hide_index=False,
-        )
-    with st.expander("See Geocodes on Map"):
-        geocodes = ss["data"][["Lat", "Lon"]].values.tolist()
-        m = folium.Map(location=geocodes[0], zoom_start=6)
-        for i, geo in enumerate(geocodes):
-            folium.Marker(geo, popup=ss["data"].iloc[i]["Address"]).add_to(m)
-
-        # call to render Folium map in Streamlit
-        st_data = st_folium(m, width=725)
+    display_input()
 
     ss["parameters_set"] = st.button(
         "Choose Your Working Hours", on_click=working_hours_selection_dialog
@@ -101,8 +77,8 @@ if ss["data"] is not None:
 
     clicked = st.button("Generate schedule", disabled=not ss["parameters_set"])
     if clicked:
-        ss["solution"], ss["location_list"] = solve(
-            ss["data"], parameters=ss["parameters"]
+        ss["solution"], ss["location_list"], ss["downloadable_solution"] = (
+            solve(ss["data"], parameters=ss["parameters"])
         )
 
         ss["solve"] = True

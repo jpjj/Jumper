@@ -84,4 +84,46 @@ def solve(data: pd.DataFrame, parameters: dict):  # -> (list, PyOutput)
         operation_times,
         1,
     )
-    return solution, location_list
+    df = postprocess(solution, location_list)
+    return solution, location_list, df
+
+
+def postprocess(solution, location_list):
+    """
+    Postprocessing of the solution,
+    creating calendar events,
+    creating geojson things
+    and creating a downloadable dataframe out of it
+    """
+    # dataframe with name, address, result_start_time, result_end_time, ordered in the order of the solution
+
+    info = []
+    for event in solution.schedule:
+        window = event[0].window
+        start = datetime.datetime.fromtimestamp(
+            window[0], tz=datetime.timezone.utc
+        )
+        end = datetime.datetime.fromtimestamp(
+            window[1], tz=datetime.timezone.utc
+        )
+        name = type(event[0]).__name__[2:]
+        if name == "Work":
+            location = event[0].location
+            info.append(
+                {
+                    "Name": location_list[location]["name"],
+                    "Address": location_list[location]["address"],
+                    "Start Time": start,
+                    "End Time": end,
+                }
+            )
+    df = pd.DataFrame(
+        data=info,
+        columns=[
+            "Name",
+            "Address",
+            "Start Time",
+            "End Time",
+        ],
+    )
+    return df

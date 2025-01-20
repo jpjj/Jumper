@@ -1,6 +1,17 @@
 import time
 from geopy.geocoders import Nominatim
 from geopy import distance
+import pandas as pd
+import streamlit as st
+
+
+def add_geocodes(data):
+    for i, row in data.iterrows():
+        if pd.isna(row["Lat"]) or pd.isna(row["Lat"]):
+            st.write(f"Finding missing geocode for address {row['Address']}...")
+            geocode = geocode_address(row["Address"])
+            data.at[i, "Lat"] = geocode[0][0]
+            data.at[i, "Lon"] = geocode[0][1]
 
 
 def geocode_address(address):
