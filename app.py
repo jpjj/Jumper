@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 from src.display_input import display_input
 from src.display_solution import display_solution
-from src.solve import solve
+from src.solve import get_location_list, solve
 from src.geocode import add_geocodes
 from src import setup
 from src.working_hours_selection_dialog import working_hours_selection_dialog
@@ -50,7 +50,8 @@ radio_choice = st.radio(
 
 
 if radio_choice == "Use Example Data":
-    ss["data"] = pd.read_csv("./data/example.csv", index_col=0)
+    if ss["data"] is None:
+        ss["data"] = pd.read_csv("./data/example.csv", index_col=0)
 
 
 else:
@@ -60,7 +61,7 @@ else:
         on_change=setup.reset,
     )
 
-    if uploaded_file:
+    if uploaded_file and ss["data"] is None:
         ss["data"] = pd.read_csv(uploaded_file, index_col=0)
 
 if ss["data"] is not None:
@@ -68,23 +69,20 @@ if ss["data"] is not None:
         # check if all geocodes existent
         add_geocodes(ss["data"])
         st.write("All addresses geocoded.")
+        ss["location_list"] = get_location_list(ss["data"])
         ss["geocodes_checked"] = True
     display_input()
 
     ss["parameters_set"] = st.button(
-        "Choose Your Working Hours", on_click=working_hours_selection_dialog
+        "Set Parameters", on_click=working_hours_selection_dialog
     )
 
     clicked = st.button("Generate schedule", disabled=not ss["parameters_set"])
     if clicked:
-        ss["solution"], ss["location_list"], ss["downloadable_solution"] = (
-            solve(ss["data"], parameters=ss["parameters"])
+        ss["solution"], ss["downloadable_solution"] = solve(
+            ss["location_list"], parameters=ss["parameters"]
         )
 
         ss["solve"] = True
 if ss["solve"]:
-    # create two columns
-    st.write(
-        "Lexigraphical Minimization: Lateness, Traveltime, Makespan, Waitingtime."
-    )
     display_solution()

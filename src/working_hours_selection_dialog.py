@@ -1,13 +1,15 @@
 import streamlit as st
 import datetime
 
+from src.geocode import get_duration
+
 ss = st.session_state
 
 
-@st.dialog("Define Working Hours")
+@st.dialog("Define Parameters", width="large")
 def working_hours_selection_dialog():
-    co1, co2 = st.columns(2)
-    with co1:
+    col1, col2 = st.columns(2)
+    with col1:
         ss["parameters"]["start_time"] = st.time_input(
             "Set daily start time", datetime.time(6, 0)
         )
@@ -23,21 +25,42 @@ def working_hours_selection_dialog():
         ss["parameters"]["friday"] = st.checkbox("Friday", value=True)
         ss["parameters"]["saturday"] = st.checkbox("Saturday", value=False)
         ss["parameters"]["sunday"] = st.checkbox("Sunday", value=False)
-    with co2:
-        ss["parameters"]["travel_speed"] = st.number_input(
-            "Set travel speed in km/h", 1, 100, 60
-        )
-        ss["parameters"]["lunch_break"] = st.checkbox(
-            "Take a lunch break", value=True
-        )
+        st.divider()
+        ss["parameters"]["breaks"] = st.toggle("Take breaks", value=False)
 
-        ss["parameters"]["lunch_start"] = st.time_input(
-            "Set lunch start time",
-            datetime.time(12, 0),
-            disabled=not ss["parameters"]["lunch_break"],
+        ss["parameters"]["travel_time_until_break"] = st.number_input(
+            "Travel time until break (in minutes)",
+            180,
+            disabled=not ss["parameters"]["breaks"],
         )
-        ss["parameters"]["lunch_end"] = st.time_input(
-            "Set lunch end time",
-            datetime.time(13, 0),
-            disabled=not ss["parameters"]["lunch_break"],
+        ss["parameters"]["break_duration"] = st.number_input(
+            "Break length (in minutes)",
+            30,
+            disabled=not ss["parameters"]["breaks"],
+        )
+    with col2:
+        ss["parameters"]["travel_speed"] = st.slider(
+            "Set travel speed in km/h", 1, 100, 80
+        )
+        ss["parameters"]["fix_time"] = st.slider(
+            "Set a fix time added to every travel between locations (in minutes)",
+            0,
+            120,
+            5,
+        )
+        names = [loc["name"] for loc in ss["location_list"]]
+        names_to_geocodes = {
+            loc["name"]: loc["geocode"] for loc in ss["location_list"]
+        }
+        selected_location1 = st.selectbox(
+            "Select location 1",
+            options=names,
+        )
+        selected_location2 = st.selectbox(
+            "Select location 2",
+            options=names,
+            index=1,
+        )
+        st.write(
+            f"Travel duration from {selected_location1} to {selected_location2}: {datetime.timedelta(seconds=get_duration(names_to_geocodes[selected_location1], names_to_geocodes[selected_location2], ss['parameters']['travel_speed'], ss['parameters']['fix_time']))}"
         )

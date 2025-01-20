@@ -9,6 +9,7 @@ def reset():
     ss["solve"] = False
     ss["parameters"] = {}
     ss["parameters_set"] = False
+    ss["location_list"] = []
 
 
 def setup_LOL():
@@ -22,3 +23,5 @@ def setup_LOL():
         ss["parameters"] = {}
     if "parameters_set" not in ss:
         ss["parameters_set"] = False
+    if "location_list" not in ss:
+        ss["location_list"] = []

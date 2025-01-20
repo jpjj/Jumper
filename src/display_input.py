@@ -4,7 +4,7 @@ from streamlit_folium import st_folium
 
 ss = st.session_state
 
-START_DATES_COLUMN = 7
+START_DATES_COLUMN = 6
 
 
 def display_input():
@@ -34,4 +34,4 @@ def display_input_map():
         folium.Marker(geo, popup=ss["data"].iloc[i]["Address"]).add_to(m)
 
     # call to render Folium map in Streamlit
-    st_data = st_folium(m, width=725)
+    st_folium(m, width=725)

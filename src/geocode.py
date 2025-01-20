@@ -26,7 +26,21 @@ def geocode_address(address):
     return geocode
 
 
-def fetch_distance_matrix(geocodes):
+def get_duration(origin, destination, speed, fix_time):
+    """
+    speed as km/h
+    fix_time as minutes
+    """
+    result = int(distance.distance(origin, destination).km / speed * 3600)
+    if result > 0:
+        return result + fix_time * 60
+    return 0
+
+
+def fetch_distance_matrix(geocodes, speed, fix_time):
+    """
+    speed as km/h
+    """
     origins = geocodes
     destinations = geocodes
     matrix = [
@@ -35,9 +49,9 @@ def fetch_distance_matrix(geocodes):
     for i, origin in enumerate(origins):
         for j, destination in enumerate(destinations):
             if origin != (None, None) and destination != (None, None):
-                matrix[i][j] = int(
-                    distance.distance(origin, destination).km / 80 * 3600
-                )  # 80 km/h, counting the seconds
+                matrix[i][j] = get_duration(
+                    origin, destination, speed, fix_time
+                )
             else:
                 matrix[i][j] = float("inf")
     return matrix

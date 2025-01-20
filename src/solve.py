@@ -2,13 +2,12 @@ import datetime
 import pandas as pd
 import streamlit as st
 import traveling_rustling
-from streamlit_calendar import calendar
 from src.geocode import fetch_distance_matrix
 
 ss = st.session_state
 
 
-def solve(data: pd.DataFrame, parameters: dict):  # -> (list, PyOutput)
+def get_location_list(data: pd.DataFrame):
     location_list = []
     i = -1
     for name, row in data.iterrows():
@@ -32,7 +31,13 @@ def solve(data: pd.DataFrame, parameters: dict):  # -> (list, PyOutput)
         for idx in data.columns[6:]:
             if row[idx]:
                 location_list[i]["time_windows"].append(idx)
+    return location_list
 
+
+def solve(
+    location_list,
+    parameters: dict,
+):  # -> (list, PyOutput)
     time_windows = [[] for _ in range(len(location_list))]
     for i, location in enumerate(location_list):
         for date_str in location["time_windows"]:
@@ -66,7 +71,9 @@ def solve(data: pd.DataFrame, parameters: dict):  # -> (list, PyOutput)
     ]
 
     distance_matrix = fetch_distance_matrix(
-        [location["geocode"] for location in location_list]
+        [location["geocode"] for location in location_list],
+        parameters["travel_speed"],
+        parameters["fix_time"],
     )
     start = (
         parameters["start_time"].hour * 60 + parameters["start_time"].minute
@@ -76,16 +83,34 @@ def solve(data: pd.DataFrame, parameters: dict):  # -> (list, PyOutput)
     ) * 60 + parameters["end_time"].second
     operation_times = (start, end)
 
+    working_days = [
+        parameters["monday"],
+        parameters["tuesday"],
+        parameters["wednesday"],
+        parameters["thursday"],
+        parameters["friday"],
+        parameters["saturday"],
+        parameters["sunday"],
+    ]
+    if parameters["breaks"]:
+        travel_duration_until_break = parameters["travel_time_until_break"] * 60
+        break_duration = parameters["break_duration"] * 60
+    else:
+        travel_duration_until_break = None
+        break_duration = None
     solution = traveling_rustling.solve(
         distance_matrix,
         distance_matrix,
         working_times,
         time_windows,
         operation_times,
+        # working_days,
+        # travel_duration_until_break,
+        # break_duration,
         1,
     )
     df = postprocess(solution, location_list)
-    return solution, location_list, df
+    return solution, df
 
 
 def postprocess(solution, location_list):
