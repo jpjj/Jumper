@@ -17,7 +17,7 @@ def display_input():
 
 
 def display_input_dataframe():
-    ss["data"] = st.data_editor(
+    ss["data_edited"] = st.data_editor(
         ss["data"],
         column_config={
             column_date: st.column_config.CheckboxColumn()

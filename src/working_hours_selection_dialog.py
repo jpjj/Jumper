@@ -30,17 +30,21 @@ def working_hours_selection_dialog():
 
         ss["parameters"]["travel_time_until_break"] = st.number_input(
             "Travel time until break (in minutes)",
-            180,
+            min_value=60,
+            max_value=300,
+            value=180,
             disabled=not ss["parameters"]["breaks"],
         )
         ss["parameters"]["break_duration"] = st.number_input(
             "Break length (in minutes)",
-            30,
+            min_value=5,
+            max_value=120,
+            value=30,
             disabled=not ss["parameters"]["breaks"],
         )
     with col2:
         ss["parameters"]["travel_speed"] = st.slider(
-            "Set travel speed in km/h", 1, 100, 80
+            "Set travel speed in km/h", 20, 120, 80
         )
         ss["parameters"]["fix_time"] = st.slider(
             "Set a fix time added to every travel between locations (in minutes)",
@@ -63,4 +67,11 @@ def working_hours_selection_dialog():
         )
         st.write(
             f"Travel duration from {selected_location1} to {selected_location2}: {datetime.timedelta(seconds=get_duration(names_to_geocodes[selected_location1], names_to_geocodes[selected_location2], ss['parameters']['travel_speed'], ss['parameters']['fix_time']))}"
+        )
+        st.divider()
+        ss["parameters"]["time_limit"] = st.number_input(
+            "Set running time of the solver (in seconds)",
+            min_value=1,
+            max_value=30,
+            value=1,
         )

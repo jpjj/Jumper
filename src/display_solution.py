@@ -125,7 +125,7 @@ def display_solution_map():
     st.title("Route (from red to green)")
     m = folium.Map()
     folium.plugins.Fullscreen(
-        position="topright",
+        position="topleft",
         title="Expand me",
         title_cancel="Exit me",
         force_separate_button=True,

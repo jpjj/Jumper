@@ -107,7 +107,7 @@ def solve(
         # working_days,
         # travel_duration_until_break,
         # break_duration,
-        1,
+        ss["parameters"]["time_limit"],
     )
     df = postprocess(solution, location_list)
     return solution, df

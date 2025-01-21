@@ -79,6 +79,7 @@ if ss["data"] is not None:
 
     clicked = st.button("Generate schedule", disabled=not ss["parameters_set"])
     if clicked:
+        ss["location_list"] = get_location_list(ss["data_edited"])
         ss["solution"], ss["downloadable_solution"] = solve(
             ss["location_list"], parameters=ss["parameters"]
         )
