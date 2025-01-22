@@ -83,21 +83,21 @@ def solve(
     ) * 60 + parameters["end_time"].second
     operation_times = (start, end)
 
-    working_days = [
-        parameters["monday"],
-        parameters["tuesday"],
-        parameters["wednesday"],
-        parameters["thursday"],
-        parameters["friday"],
-        parameters["saturday"],
-        parameters["sunday"],
-    ]
-    if parameters["breaks"]:
-        travel_duration_until_break = parameters["travel_time_until_break"] * 60
-        break_duration = parameters["break_duration"] * 60
-    else:
-        travel_duration_until_break = None
-        break_duration = None
+    # working_days = [
+    #     parameters["monday"],
+    #     parameters["tuesday"],
+    #     parameters["wednesday"],
+    #     parameters["thursday"],
+    #     parameters["friday"],
+    #     parameters["saturday"],
+    #     parameters["sunday"],
+    # ]
+    # if parameters["breaks"]:
+    #     travel_duration_until_break = parameters["travel_time_until_break"] * 60
+    #     break_duration = parameters["break_duration"] * 60
+    # else:
+    #     travel_duration_until_break = None
+    #     break_duration = None
     solution = traveling_rustling.solve(
         distance_matrix,
         distance_matrix,
