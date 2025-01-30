@@ -138,6 +138,8 @@ def postprocess(solution, location_list):
                 {
                     "Name": location_list[location]["name"],
                     "Address": location_list[location]["address"],
+                    "Lat": location_list[location]["geocode"][0],
+                    "Lon": location_list[location]["geocode"][1],
                     "Start Time": start,
                     "End Time": end,
                 }
@@ -147,6 +149,8 @@ def postprocess(solution, location_list):
         columns=[
             "Name",
             "Address",
+            "Lat",
+            "Lon",
             "Start Time",
             "End Time",
         ],

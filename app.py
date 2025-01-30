@@ -73,9 +73,7 @@ if ss["data"] is not None:
         ss["geocodes_checked"] = True
     display_input()
 
-    ss["parameters_set"] = st.button(
-        "Set Parameters", on_click=working_hours_selection_dialog
-    )
+    st.button("Set Parameters", on_click=working_hours_selection_dialog)
 
     clicked = st.button("Generate schedule", disabled=not ss["parameters_set"])
     if clicked:

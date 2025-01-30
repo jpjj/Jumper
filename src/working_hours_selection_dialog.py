@@ -75,3 +75,7 @@ def working_hours_selection_dialog():
         st.write(
             f"Travel duration from {selected_location1} to {selected_location2}: {datetime.timedelta(seconds=get_duration(names_to_geocodes[selected_location1], names_to_geocodes[selected_location2], ss['parameters']['travel_speed'], ss['parameters']['fix_time']))}"
         )
+        clicked = st.button("Save")
+        if clicked:
+            ss["parameters_set"] = True
+            st.rerun()
