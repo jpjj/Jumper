@@ -17,8 +17,13 @@ def add_geocodes(data):
 def geocode_address(address):
     geolocator = Nominatim(user_agent="Simon_TWTSP")
     geocode = []
-    time.sleep(1)
-    location = geolocator.geocode(address)
+    location = None
+    while not location:
+        time.sleep(1)
+        try:
+            location = geolocator.geocode(address)
+        except Exception as e:
+            st.write(f"Error: {e}, retrying...")
     if location:
         geocode.append((location.latitude, location.longitude))
     else:
