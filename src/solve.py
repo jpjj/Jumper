@@ -31,6 +31,10 @@ def get_location_list(data: pd.DataFrame):
         for idx in data.columns[6:]:
             if row[idx]:
                 location_list[i]["time_windows"].append(idx)
+        # WORKAROUND: if no time windows are given, use all days
+        if location_list[i]["time_windows"] == []:
+            for idx in data.columns[6:]:
+                location_list[i]["time_windows"].append(idx)
     return location_list
 
 

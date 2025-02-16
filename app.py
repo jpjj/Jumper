@@ -1,8 +1,9 @@
 # add to requirements.txt
 # traveling_rustling==0.1.1
 
+import time
 import streamlit as st
-import pandas as pd
+from src.read_input import read_input
 from src.display_input import display_input
 from src.display_solution import display_solution
 from src.solve import get_location_list, solve
@@ -51,7 +52,7 @@ radio_choice = st.radio(
 
 if radio_choice == "Use Example Data":
     if ss["data"] is None:
-        ss["data"] = pd.read_csv("./data/example.csv", index_col=0)
+        ss["data"] = read_input("./data/example.csv")
 
 
 else:
@@ -62,7 +63,7 @@ else:
     )
 
     if uploaded_file and ss["data"] is None:
-        ss["data"] = pd.read_csv(uploaded_file, index_col=0)
+        ss["data"] = read_input(uploaded_file)
 
 if ss["data"] is not None:
     if not ss["geocodes_checked"]:
@@ -78,9 +79,14 @@ if ss["data"] is not None:
     clicked = st.button("Generate schedule", disabled=not ss["parameters_set"])
     if clicked:
         ss["location_list"] = get_location_list(ss["data_edited"])
-        ss["solution"], ss["downloadable_solution"] = solve(
-            ss["location_list"], parameters=ss["parameters"]
-        )
+        with st.spinner(
+            f"Please wait {ss['parameters']['time_limit']} seconds. Finding optimized route...",
+            # show_time=True,
+        ):
+            time.sleep(0.5)
+            ss["solution"], ss["downloadable_solution"] = solve(
+                ss["location_list"], parameters=ss["parameters"]
+            )
 
         ss["solve"] = True
 if ss["solve"]:
